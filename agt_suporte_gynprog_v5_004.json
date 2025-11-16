@@ -51,7 +51,9 @@
     },
     {
       "parameters": {
+        "resource": "embedding",
         "model": "text-embedding-3-large",
+        "text": "={{ $json.message_content }}",
         "options": {},
         "requestOptions": {}
       },
@@ -69,7 +71,7 @@
           "name": "OpenAi account"
         }
       },
-      "notesInFlow": "\nv5.003: Considerar cache para mensagens similares"
+      "notesInFlow": "FIXED v5.004: Adicionado campo text para embedding\nv5.003: Considerar cache para mensagens similares"
     },
     {
       "parameters": {
@@ -139,9 +141,25 @@
     },
     {
       "parameters": {
-        "resource": "__CUSTOM_API_CALL__",
-        "requestOptions": {},
-        "model": "gpt-4o-mini"
+        "resource": "chat",
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Você é um agente de suporte da Gynprog. Responda em português brasileiro (PT-BR), mantendo um tom profissional e empático. Use as informações fornecidas (memória do cliente, histórico de mensagens e base de conhecimento) para gerar respostas precisas e úteis. Confirme o entendimento da questão, cite apenas dados presentes nas fontes fornecidas e sinalize limitações quando necessário."
+            },
+            {
+              "role": "user",
+              "content": "=Mensagem do cliente: {{ $json.message_content }}\n\nMemória do cliente:\n{{ $item(0).$node[\"PostgreSQL: Buscar Memoria\"].json[0]?.conversation_summary || 'Nenhuma memória anterior' }}\n\nÚltimas mensagens:\n{{ $item(0).$node[\"PostgreSQL: Mensagens Recentes\"].json.map(m => `${m.direction}: ${m.content}`).join('\\n') || 'Sem histórico recente' }}\n\nBase de conhecimento relevante:\n{{ $item(0).$node[\"Pinecone: Knowledge Base (HTTP)\"].json.matches?.slice(0, 3).map(m => m.metadata?.text || '').join('\\n\\n') || 'Nenhum artigo relevante encontrado' }}\n\nHistórico similar:\n{{ $item(0).$node[\"Pinecone: Historico (HTTP)\"].json.matches?.slice(0, 2).map(m => m.metadata?.text || '').join('\\n\\n') || 'Sem histórico similar' }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 500
+        },
+        "requestOptions": {}
       },
       "id": "5aa57cac-a652-4678-939e-fdcd625b8170",
       "name": "GPT-4: Gerar Resposta",
@@ -157,12 +175,29 @@
           "name": "OpenAi account"
         }
       },
-      "notesInFlow": "Prompt v2025-02-15\nSystem: Voc\u00ea \u00e9 um agente de suporte da Gynprog, responde em PT-BR, mantendo tom profissional e emp\u00e1tico.\nUser template: mensagem normalizada, mem\u00f3ria do cliente, \u00faltimos contatos e trechos da base de conhecimento.\nInstru\u00e7\u00f5es: confirmar entendimento, citar dados apenas se presentes nas fontes e sinalizar limita\u00e7\u00f5es quando ocorrerem."
+      "notesInFlow": "FIXED v5.004: Configurado resource=chat com mensagens e contexto completo\nPrompt v2025-02-15\nSystem: Você é um agente de suporte da Gynprog, responde em PT-BR, mantendo tom profissional e empático.\nUser template: mensagem normalizada, memória do cliente, últimos contatos e trechos da base de conhecimento.\nInstruções: confirmar entendimento, citar dados apenas se presentes nas fontes e sinalizar limitações quando ocorrerem."
     },
     {
       "parameters": {
+        "resource": "chat",
         "model": "gpt-4o-mini",
-        "options": {},
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Você é um assistente que consolida memórias de conversas de suporte. Analise a conversa atual e a memória existente para gerar um resumo consolidado. Retorne APENAS um objeto JSON válido com os campos: conversation_summary (texto), new_resolved_issues (array), new_pending_issues (array), key_topics (array), sentiment (string: positive/neutral/negative). NÃO inclua markdown, explicações ou texto adicional."
+            },
+            {
+              "role": "user",
+              "content": "=Conversa atual:\nCliente: {{ $item(0).$node[\"Normalizar Mensagem\"].json.message_content }}\nAssistente: {{ $json.choices[0].message.content }}\n\nMemória existente:\n{{ JSON.stringify($item(0).$node[\"PostgreSQL: Buscar Memoria\"].json[0] || {}) }}\n\nATUALIZE a memória consolidando as informações. Retorne JSON puro sem markdown."
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 800,
+          "responseFormat": "json_object"
+        },
         "requestOptions": {}
       },
       "id": "035fcba3-d5fa-4b37-ae27-fbd8f76f6dfa",
@@ -179,7 +214,21 @@
           "name": "OpenAi account"
         }
       },
-      "notesInFlow": "Prompt v2025-02-15\nInstrui o modelo a consolidar mem\u00f3ria do cliente (resumo, pend\u00eancias, t\u00f3picos e sentimento) sem duplicar itens."
+      "notesInFlow": "FIXED v5.004: Configurado resource=chat com prompt de consolidação de memória\nPrompt v2025-02-15\nInstrui o modelo a consolidar memória do cliente (resumo, pendências, tópicos e sentimento) sem duplicar itens."
+    },
+    {
+      "parameters": {
+        "functionCode": "// Processar resposta JSON do GPT-4 Atualizar Memoria v5.004\n\nconst results = [];\n\nfor (const item of items) {\n  try {\n    // A resposta do GPT-4 com json_object vem em choices[0].message.content\n    const content = item.json.choices?.[0]?.message?.content || '{}';\n    \n    // Parse do JSON\n    let memoryData;\n    try {\n      memoryData = typeof content === 'string' ? JSON.parse(content) : content;\n    } catch (parseError) {\n      console.error('Erro ao parsear JSON da memória:', parseError);\n      // Fallback: criar estrutura vazia\n      memoryData = {\n        conversation_summary: '',\n        new_resolved_issues: [],\n        new_pending_issues: [],\n        key_topics: [],\n        sentiment: 'neutral'\n      };\n    }\n    \n    // Normalizar estrutura\n    const normalized = {\n      conversation_summary: memoryData.conversation_summary || '',\n      new_resolved_issues: Array.isArray(memoryData.new_resolved_issues) \n        ? memoryData.new_resolved_issues \n        : [],\n      new_pending_issues: Array.isArray(memoryData.new_pending_issues) \n        ? memoryData.new_pending_issues \n        : [],\n      key_topics: Array.isArray(memoryData.key_topics) \n        ? memoryData.key_topics \n        : [],\n      sentiment: memoryData.sentiment || 'neutral'\n    };\n    \n    results.push({ json: normalized });\n    \n  } catch (error) {\n    console.error('Erro ao processar memória:', error);\n    // Em caso de erro, retornar estrutura vazia para não quebrar o fluxo\n    results.push({\n      json: {\n        conversation_summary: '',\n        new_resolved_issues: [],\n        new_pending_issues: [],\n        key_topics: [],\n        sentiment: 'neutral'\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "id": "f3d9e8c1-4a2b-4d8f-9e5a-7c8d9e0f1a2b",
+      "name": "Processar Memoria JSON",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        384,
+        96
+      ],
+      "notesInFlow": "NOVO v5.004: Processa resposta JSON do GPT-4 Atualizar Memoria"
     },
     {
       "parameters": {
@@ -863,6 +912,17 @@
       ]
     },
     "GPT-4: Atualizar Memoria": {
+      "main": [
+        [
+          {
+            "node": "Processar Memoria JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processar Memoria JSON": {
       "main": [
         [
           {
