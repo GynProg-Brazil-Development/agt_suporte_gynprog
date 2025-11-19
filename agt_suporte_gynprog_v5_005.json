@@ -1,5 +1,5 @@
 {
-  "name": "agt_suporte_gynprog_v5.004",
+  "name": "agt_suporte_gynprog_v5.005",
   "nodes": [
     {
       "parameters": {
@@ -104,7 +104,7 @@
           "name": "Header Auth account"
         }
       },
-      "notesInFlow": "\nv5.003: Recomenda-se mover URL para vari\u00e1vel de ambiente"
+      "notesInFlow": "\nv5.003: Recomenda-se mover URL para variável de ambiente"
     },
     {
       "parameters": {
@@ -137,7 +137,7 @@
           "name": "Header Auth account"
         }
       },
-      "notesInFlow": "\nv5.003: Recomenda-se mover URL para vari\u00e1vel de ambiente"
+      "notesInFlow": "\nv5.003: Recomenda-se mover URL para variável de ambiente"
     },
     {
       "parameters": {
@@ -151,7 +151,7 @@
             },
             {
               "role": "user",
-              "content": "=Mensagem do cliente: {{ $json.message_content }}\n\nMemória do cliente:\n{{ $item(0).$node[\"PostgreSQL: Buscar Memoria\"].json[0]?.conversation_summary || 'Nenhuma memória anterior' }}\n\nÚltimas mensagens:\n{{ $item(0).$node[\"PostgreSQL: Mensagens Recentes\"].json.map(m => `${m.direction}: ${m.content}`).join('\\n') || 'Sem histórico recente' }}\n\nBase de conhecimento relevante:\n{{ $item(0).$node[\"Pinecone: Knowledge Base (HTTP)\"].json.matches?.slice(0, 3).map(m => m.metadata?.text || '').join('\\n\\n') || 'Nenhum artigo relevante encontrado' }}\n\nHistórico similar:\n{{ $item(0).$node[\"Pinecone: Historico (HTTP)\"].json.matches?.slice(0, 2).map(m => m.metadata?.text || '').join('\\n\\n') || 'Sem histórico similar' }}"
+              "content": "=Mensagem do cliente: {{ $json.message_content }}\n\nMemória do cliente:\n{{ $json.memoria_cliente?.conversation_summary || 'Nenhuma memória anterior' }}\n\nÚltimas mensagens:\n{{ $json.mensagens_recentes.map(m => `${m.direction}: ${m.content}`).join('\\n') || 'Sem histórico recente' }}\n\nBase de conhecimento relevante:\n{{ $json.knowledge_base?.slice(0, 3).map(m => m.metadata?.text || '').join('\\n\\n') || 'Nenhum artigo relevante encontrado' }}\n\nHistórico similar:\n{{ $json.historico_similar?.slice(0, 2).map(m => m.metadata?.text || '').join('\\n\\n') || 'Sem histórico similar' }}"
             }
           ]
         },
@@ -175,7 +175,7 @@
           "name": "OpenAi account"
         }
       },
-      "notesInFlow": "FIXED v5.004: Configurado resource=chat com mensagens e contexto completo\nPrompt v2025-02-15\nSystem: Você é um agente de suporte da Gynprog, responde em PT-BR, mantendo tom profissional e empático.\nUser template: mensagem normalizada, memória do cliente, últimos contatos e trechos da base de conhecimento.\nInstruções: confirmar entendimento, citar dados apenas se presentes nas fontes e sinalizar limitações quando ocorrerem."
+      "notesInFlow": "FIXED v5.005: Prompt atualizado para usar dados consolidados do Merge Contextos\nv5.004: Configurado resource=chat com mensagens e contexto completo\nPrompt v2025-02-15\nSystem: Você é um agente de suporte da Gynprog, responde em PT-BR, mantendo tom profissional e empático.\nUser template: mensagem normalizada, memória do cliente, últimos contatos e trechos da base de conhecimento.\nInstruções: confirmar entendimento, citar dados apenas se presentes nas fontes e sinalizar limitações quando ocorrerem."
     },
     {
       "parameters": {
@@ -271,7 +271,7 @@
     },
     {
       "parameters": {
-        "functionCode": "\n// =================================================================\n// FUN\u00c7\u00c3O REFATORADA v5.003 - Normaliza\u00e7\u00e3o de Mensagens Meta\n// Corre\u00e7\u00f5es: valida\u00e7\u00e3o de entrada, fun\u00e7\u00f5es auxiliares, coment\u00e1rios\n// =================================================================\n\n/**\n * Sanitiza string para prevenir injection\n */\nfunction sanitizeString(str, maxLength = 500) {\n  if (typeof str !== 'string') return '';\n  return str.trim().slice(0, maxLength);\n}\n\n/**\n * Valida e limpa n\u00famero de telefone\n */\nfunction sanitizePhoneNumber(phone) {\n  if (!phone) return '';\n  const cleaned = String(phone).replace(/[^0-9]/g, '');\n  return cleaned.slice(0, 20); // Limite razo\u00e1vel\n}\n\n/**\n * Extrai informa\u00e7\u00f5es de contato\n */\nfunction extractContactInfo(value) {\n  const contacts = value.contacts || [];\n  const contact = contacts[0] || {};\n  \n  const name = sanitizeString(\n    contact.profile?.name || \n    contact.profile?.Name || \n    contact.name || \n    'Contato Meta'\n  );\n  \n  const waId = sanitizePhoneNumber(contact.wa_id);\n  \n  return { name, waId };\n}\n\n/**\n * Extrai texto da mensagem baseado no tipo\n */\nfunction extractMessageText(message) {\n  const messageType = message.type || 'text';\n  let text = '';\n  \n  try {\n    switch (messageType) {\n      case 'text':\n        text = message.text?.body || '';\n        break;\n        \n      case 'interactive':\n        const interactive = message.interactive || {};\n        if (interactive.type === 'list_reply') {\n          text = interactive.list_reply?.title || \n                 interactive.list_reply?.description || '';\n        } else if (interactive.type === 'button_reply') {\n          text = interactive.button_reply?.title || \n                 interactive.button_reply?.id || '';\n        }\n        break;\n        \n      case 'button':\n        text = message.button?.text || '';\n        break;\n        \n      case 'reaction':\n        text = message.reaction?.emoji || '';\n        break;\n        \n      case 'image':\n      case 'video':\n      case 'audio':\n      case 'document':\n        text = message[messageType]?.caption || \n               message[messageType]?.filename || '';\n        break;\n        \n      default:\n        text = '';\n    }\n  } catch (error) {\n    console.error('Erro ao extrair texto:', error);\n    text = '';\n  }\n  \n  return text || `[${messageType} sem texto]`;\n}\n\n/**\n * Cria timestamp ISO v\u00e1lido\n */\nfunction createTimestamp(messageTimestamp) {\n  try {\n    const timestampSeconds = Number(messageTimestamp || Date.now() / 1000);\n    if (Number.isNaN(timestampSeconds)) {\n      return new Date().toISOString();\n    }\n    return new Date(timestampSeconds * 1000).toISOString();\n  } catch (error) {\n    return new Date().toISOString();\n  }\n}\n\n/**\n * Valida estrutura b\u00e1sica do evento\n */\nfunction validateEvent(item) {\n  if (!item || !item.json) {\n    throw new Error('Item inv\u00e1lido: estrutura JSON ausente');\n  }\n  \n  const event = item.json.event || {};\n  const messages = event.messages;\n  \n  if (!Array.isArray(messages) || messages.length === 0) {\n    console.warn('Evento sem mensagens v\u00e1lidas');\n    return false;\n  }\n  \n  return true;\n}\n\n// =================================================================\n// PROCESSAMENTO PRINCIPAL\n// =================================================================\n\nconst results = [];\nconst errors = [];\n\nfor (let i = 0; i < items.length; i++) {\n  try {\n    // Valida\u00e7\u00e3o inicial\n    if (!validateEvent(items[i])) {\n      continue;\n    }\n    \n    const base = items[i].json || {};\n    const config = base.config || {};\n    const value = base.event || {};\n    const messages = value.messages || [];\n    \n    // Configurar metadados base\n    const metaBase = { ...(base.meta || {}) };\n    metaBase.environment = config.meta_env || metaBase.environment || 'sandbox';\n    metaBase.provider = 'meta';\n    metaBase.version = 'v5.003';\n    \n    // Extrair informa\u00e7\u00f5es de contato\n    const { name: contactName, waId } = extractContactInfo(value);\n    \n    // Processar cada mensagem\n    for (const message of messages) {\n      try {\n        const senderWaId = sanitizePhoneNumber(message.from || waId);\n        \n        if (!senderWaId) {\n          console.warn('Mensagem sem sender v\u00e1lido, pulando...');\n          continue;\n        }\n        \n        const isoTimestamp = createTimestamp(message.timestamp);\n        const messageType = sanitizeString(message.type || 'text', 50);\n        const text = sanitizeString(extractMessageText(message), 4000);\n        \n        // Metadados da mensagem\n        const meta = { ...metaBase };\n        meta.client_mask = senderWaId.slice(-4);\n        meta.route = 'meta_inbound';\n        meta.processed_at = new Date().toISOString();\n        \n        // Objeto normalizado\n        const normalized = {\n          sender: senderWaId,\n          type: messageType,\n          text: text,\n          timestamp: isoTimestamp,\n          message_id: sanitizeString(message.id || '', 100),\n          context_id: sanitizeString(message.context?.id || '', 100),\n          raw: message, // Manter raw para debug\n          config,\n          meta,\n          client_id: senderWaId,\n        };\n        \n        results.push({\n          json: {\n            client_id: senderWaId,\n            client_name: contactName,\n            message_content: text,\n            message_type: messageType,\n            message_id: normalized.message_id,\n            timestamp: isoTimestamp,\n            direction: 'inbound',\n            channel: 'whatsapp:meta',\n            normalized,\n            meta,\n            config,\n            event: value,\n          },\n        });\n        \n      } catch (messageError) {\n        errors.push({\n          stage: 'message_processing',\n          message_id: message.id,\n          error: messageError.message\n        });\n        console.error('Erro ao processar mensagem:', messageError);\n      }\n    }\n    \n  } catch (itemError) {\n    errors.push({\n      stage: 'item_processing',\n      item_index: i,\n      error: itemError.message\n    });\n    console.error('Erro ao processar item:', itemError);\n  }\n}\n\n// Log de erros para monitoramento\nif (errors.length > 0) {\n  console.error('Total de erros:', errors.length, errors);\n}\n\n// Se n\u00e3o h\u00e1 resultados v\u00e1lidos, retorna erro\nif (results.length === 0) {\n  throw new Error('Nenhuma mensagem v\u00e1lida foi processada');\n}\n\nreturn results;\n"
+        "functionCode": "\n// =================================================================\n// FUNÇÃO REFATORADA v5.003 - Normalização de Mensagens Meta\n// Correções: validação de entrada, funções auxiliares, comentários\n// =================================================================\n\n/**\n * Sanitiza string para prevenir injection\n */\nfunction sanitizeString(str, maxLength = 500) {\n  if (typeof str !== 'string') return '';\n  return str.trim().slice(0, maxLength);\n}\n\n/**\n * Valida e limpa número de telefone\n */\nfunction sanitizePhoneNumber(phone) {\n  if (!phone) return '';\n  const cleaned = String(phone).replace(/[^0-9]/g, '');\n  return cleaned.slice(0, 20); // Limite razoável\n}\n\n/**\n * Extrai informações de contato\n */\nfunction extractContactInfo(value) {\n  const contacts = value.contacts || [];\n  const contact = contacts[0] || {};\n  \n  const name = sanitizeString(\n    contact.profile?.name || \n    contact.profile?.Name || \n    contact.name || \n    'Contato Meta'\n  );\n  \n  const waId = sanitizePhoneNumber(contact.wa_id);\n  \n  return { name, waId };\n}\n\n/**\n * Extrai texto da mensagem baseado no tipo\n */\nfunction extractMessageText(message) {\n  const messageType = message.type || 'text';\n  let text = '';\n  \n  try {\n    switch (messageType) {\n      case 'text':\n        text = message.text?.body || '';\n        break;\n        \n      case 'interactive':\n        const interactive = message.interactive || {};\n        if (interactive.type === 'list_reply') {\n          text = interactive.list_reply?.title || \n                 interactive.list_reply?.description || '';\n        } else if (interactive.type === 'button_reply') {\n          text = interactive.button_reply?.title || \n                 interactive.button_reply?.id || '';\n        }\n        break;\n        \n      case 'button':\n        text = message.button?.text || '';\n        break;\n        \n      case 'reaction':\n        text = message.reaction?.emoji || '';\n        break;\n        \n      case 'image':\n      case 'video':\n      case 'audio':\n      case 'document':\n        text = message[messageType]?.caption || \n               message[messageType]?.filename || '';\n        break;\n        \n      default:\n        text = '';\n    }\n  } catch (error) {\n    console.error('Erro ao extrair texto:', error);\n    text = '';\n  }\n  \n  return text || `[${messageType} sem texto]`;\n}\n\n/**\n * Cria timestamp ISO válido\n */\nfunction createTimestamp(messageTimestamp) {\n  try {\n    const timestampSeconds = Number(messageTimestamp || Date.now() / 1000);\n    if (Number.isNaN(timestampSeconds)) {\n      return new Date().toISOString();\n    }\n    return new Date(timestampSeconds * 1000).toISOString();\n  } catch (error) {\n    return new Date().toISOString();\n  }\n}\n\n/**\n * Valida estrutura básica do evento\n */\nfunction validateEvent(item) {\n  if (!item || !item.json) {\n    throw new Error('Item inválido: estrutura JSON ausente');\n  }\n  \n  const event = item.json.event || {};\n  const messages = event.messages;\n  \n  if (!Array.isArray(messages) || messages.length === 0) {\n    console.warn('Evento sem mensagens válidas');\n    return false;\n  }\n  \n  return true;\n}\n\n// =================================================================\n// PROCESSAMENTO PRINCIPAL\n// =================================================================\n\nconst results = [];\nconst errors = [];\n\nfor (let i = 0; i < items.length; i++) {\n  try {\n    // Validação inicial\n    if (!validateEvent(items[i])) {\n      continue;\n    }\n    \n    const base = items[i].json || {};\n    const config = base.config || {};\n    const value = base.event || {};\n    const messages = value.messages || [];\n    \n    // Configurar metadados base\n    const metaBase = { ...(base.meta || {}) };\n    metaBase.environment = config.meta_env || metaBase.environment || 'sandbox';\n    metaBase.provider = 'meta';\n    metaBase.version = 'v5.003';\n    \n    // Extrair informações de contato\n    const { name: contactName, waId } = extractContactInfo(value);\n    \n    // Processar cada mensagem\n    for (const message of messages) {\n      try {\n        const senderWaId = sanitizePhoneNumber(message.from || waId);\n        \n        if (!senderWaId) {\n          console.warn('Mensagem sem sender válido, pulando...');\n          continue;\n        }\n        \n        const isoTimestamp = createTimestamp(message.timestamp);\n        const messageType = sanitizeString(message.type || 'text', 50);\n        const text = sanitizeString(extractMessageText(message), 4000);\n        \n        // Metadados da mensagem\n        const meta = { ...metaBase };\n        meta.client_mask = senderWaId.slice(-4);\n        meta.route = 'meta_inbound';\n        meta.processed_at = new Date().toISOString();\n        \n        // Objeto normalizado\n        const normalized = {\n          sender: senderWaId,\n          type: messageType,\n          text: text,\n          timestamp: isoTimestamp,\n          message_id: sanitizeString(message.id || '', 100),\n          context_id: sanitizeString(message.context?.id || '', 100),\n          raw: message, // Manter raw para debug\n          config,\n          meta,\n          client_id: senderWaId,\n        };\n        \n        results.push({\n          json: {\n            client_id: senderWaId,\n            client_name: contactName,\n            message_content: text,\n            message_type: messageType,\n            message_id: normalized.message_id,\n            timestamp: isoTimestamp,\n            direction: 'inbound',\n            channel: 'whatsapp:meta',\n            normalized,\n            meta,\n            config,\n            event: value,\n          },\n        });\n        \n      } catch (messageError) {\n        errors.push({\n          stage: 'message_processing',\n          message_id: message.id,\n          error: messageError.message\n        });\n        console.error('Erro ao processar mensagem:', messageError);\n      }\n    }\n    \n  } catch (itemError) {\n    errors.push({\n      stage: 'item_processing',\n      item_index: i,\n      error: itemError.message\n    });\n    console.error('Erro ao processar item:', itemError);\n  }\n}\n\n// Log de erros para monitoramento\nif (errors.length > 0) {\n  console.error('Total de erros:', errors.length, errors);\n}\n\n// Se não há resultados válidos, retorna erro\nif (results.length === 0) {\n  throw new Error('Nenhuma mensagem válida foi processada');\n}\n\nreturn results;\n"
       },
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
@@ -281,7 +281,7 @@
       ],
       "id": "a12eacab-7435-4c27-8548-b775afc55461",
       "name": "Normalizar Mensagem",
-      "notesInFlow": "REFATORADO v5.003: C\u00f3digo modular, valida\u00e7\u00f5es, error handling"
+      "notesInFlow": "REFATORADO v5.003: Código modular, validações, error handling"
     },
     {
       "parameters": {
@@ -351,7 +351,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// \u2705 VALIDA\u00c7\u00c3O HMAC SHA256 - Meta WhatsApp\n// crypto j\u00e1 est\u00e1 dispon\u00edvel globalmente no n8n - N\u00c3O importar!\n\nconst items = $input.all();\n\nreturn items.map(item => {\n  const config = item.json.config;\n  const rawBody = item.json.raw_body;\n  const headerSignature = item.json.headers['x-hub-signature-256'];\n  \n  // Valida\u00e7\u00f5es b\u00e1sicas\n  if (!config?.app_secret) {\n    return {\n      json: {\n        ...item.json,\n        signature: {\n          valid: false,\n          reason: 'META_APP_SECRET n\u00e3o configurado',\n          header: headerSignature || 'missing',\n          expected: null\n        }\n      }\n    };\n  }\n  \n  if (!rawBody) {\n    return {\n      json: {\n        ...item.json,\n        signature: {\n          valid: false,\n          reason: 'raw_body ausente',\n          header: headerSignature || 'missing',\n          expected: null\n        }\n      }\n    };\n  }\n  \n  if (!headerSignature) {\n    return {\n      json: {\n        ...item.json,\n        signature: {\n          valid: false,\n          reason: 'Header X-Hub-Signature-256 ausente',\n          header: 'missing',\n          expected: null\n        }\n      }\n    };\n  }\n  \n  // Calcular HMAC SHA256\n  const hmac = crypto.createHmac('sha256', config.app_secret);\n  hmac.update(rawBody, 'utf8');\n  const expectedSignature = 'sha256=' + hmac.digest('hex');\n  \n  // Compara\u00e7\u00e3o segura (timing-safe)\n  const valid = crypto.timingSafeEqual(\n    Buffer.from(headerSignature),\n    Buffer.from(expectedSignature)\n  );\n  \n  return {\n    json: {\n      ...item.json,\n      signature: {\n        valid: valid,\n        reason: valid ? 'Assinatura v\u00e1lida' : 'Assinatura inv\u00e1lida - poss\u00edvel tentativa de spoofing',\n        header: headerSignature,\n        expected: expectedSignature\n      }\n    }\n  };\n});"
+        "functionCode": "// ✅ VALIDAÇÃO HMAC SHA256 - Meta WhatsApp\n// crypto já está disponível globalmente no n8n - NÃO importar!\n\nconst items = $input.all();\n\nreturn items.map(item => {\n  const config = item.json.config;\n  const rawBody = item.json.raw_body;\n  const headerSignature = item.json.headers['x-hub-signature-256'];\n  \n  // Validações básicas\n  if (!config?.app_secret) {\n    return {\n      json: {\n        ...item.json,\n        signature: {\n          valid: false,\n          reason: 'META_APP_SECRET não configurado',\n          header: headerSignature || 'missing',\n          expected: null\n        }\n      }\n    };\n  }\n  \n  if (!rawBody) {\n    return {\n      json: {\n        ...item.json,\n        signature: {\n          valid: false,\n          reason: 'raw_body ausente',\n          header: headerSignature || 'missing',\n          expected: null\n        }\n      }\n    };\n  }\n  \n  if (!headerSignature) {\n    return {\n      json: {\n        ...item.json,\n        signature: {\n          valid: false,\n          reason: 'Header X-Hub-Signature-256 ausente',\n          header: 'missing',\n          expected: null\n        }\n      }\n    };\n  }\n  \n  // Calcular HMAC SHA256\n  const hmac = crypto.createHmac('sha256', config.app_secret);\n  hmac.update(rawBody, 'utf8');\n  const expectedSignature = 'sha256=' + hmac.digest('hex');\n  \n  // Comparação segura (timing-safe)\n  const valid = crypto.timingSafeEqual(\n    Buffer.from(headerSignature),\n    Buffer.from(expectedSignature)\n  );\n  \n  return {\n    json: {\n      ...item.json,\n      signature: {\n        valid: valid,\n        reason: valid ? 'Assinatura válida' : 'Assinatura inválida - possível tentativa de spoofing',\n        header: headerSignature,\n        expected: expectedSignature\n      }\n    }\n  };\n});"
       },
       "id": "09291872-d4b4-473c-b12d-e90f79122252",
       "name": "Validar Assinatura",
@@ -559,7 +559,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst verifyToken = $input.item.json.query['hub.verify_token'];\nconst challenge = $input.item.json.query['hub.challenge'];\nconst expectedToken = $input.item.json.config?.verify_token || $env.META_VERIFY_TOKEN || '';\n\nif (verifyToken && expectedToken && verifyToken === expectedToken) {\n  return [{ json: { challenge } }];\n}\n\nthrow new Error('Token de verifica\u00e7\u00e3o inv\u00e1lido');\n"
+        "jsCode": "\nconst verifyToken = $input.item.json.query['hub.verify_token'];\nconst challenge = $input.item.json.query['hub.challenge'];\nconst expectedToken = $input.item.json.config?.verify_token || $env.META_VERIFY_TOKEN || '';\n\nif (verifyToken && expectedToken && verifyToken === expectedToken) {\n  return [{ json: { challenge } }];\n}\n\nthrow new Error('Token de verificação inválido');\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -645,7 +645,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// Rate Limiter v5.003\n// Simples implementa\u00e7\u00e3o in-memory (para produ\u00e7\u00e3o use Redis)\n\nconst clientId = $json.client_id;\nconst maxRequestsPerMinute = 10;\n\n// Usar globalState do n8n (se dispon\u00edvel) ou implementar com cache externo\nconst now = Date.now();\nconst key = `rate_limit_${clientId}`;\n\n// Simular contador (em produ\u00e7\u00e3o, usar Redis/Cache)\n// Por ora, apenas log e passa adiante\nconsole.log(`Rate check for ${clientId} at ${new Date().toISOString()}`);\n\n// TODO: Implementar com Redis ou n8n cache quando dispon\u00edvel\n// if (requestCount > maxRequestsPerMinute) {\n//   throw new Error('Rate limit exceeded');\n// }\n\nreturn [$json];"
+        "functionCode": "// Rate Limiter v5.003\n// Simples implementação in-memory (para produção use Redis)\n\nconst clientId = $json.client_id;\nconst maxRequestsPerMinute = 10;\n\n// Usar globalState do n8n (se disponível) ou implementar com cache externo\nconst now = Date.now();\nconst key = `rate_limit_${clientId}`;\n\n// Simular contador (em produção, usar Redis/Cache)\n// Por ora, apenas log e passa adiante\nconsole.log(`Rate check for ${clientId} at ${new Date().toISOString()}`);\n\n// TODO: Implementar com Redis ou n8n cache quando disponível\n// if (requestCount > maxRequestsPerMinute) {\n//   throw new Error('Rate limit exceeded');\n// }\n\nreturn [$json];"
       },
       "id": "e0932ee7-af9a-43b4-8073-7415427f0138",
       "name": "Rate Limit Check",
@@ -655,12 +655,12 @@
         -400,
         192
       ],
-      "notesInFlow": "NOVO v5.003: Rate limiting (implementa\u00e7\u00e3o b\u00e1sica, requer Redis para produ\u00e7\u00e3o)"
+      "notesInFlow": "NOVO v5.003: Rate limiting (implementação básica, requer Redis para produção)"
     },
     {
       "parameters": {},
       "id": "5bef6c28-d96a-4f2d-8d3e-694c41e61f18",
-      "name": "\ud83d\udcdd SQL Schema v5.003",
+      "name": "📝 SQL Schema v5.003",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
@@ -671,13 +671,27 @@
     {
       "parameters": {},
       "id": "f842c022-c452-475d-aaa7-ebb96764bfc8",
-      "name": "\ud83d\udcdd Environment Variables",
+      "name": "📝 Environment Variables",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         -800,
         100
       ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// ====================================================================\n// MERGE CONTEXTOS v5.005 - Consolida contextos paralelos\n// ====================================================================\n// Este nó recebe 4 inputs paralelos e mescla em um único objeto\n// para enviar ao GPT-4: Gerar Resposta\n//\n// Input 0: PostgreSQL: Buscar Memoria\n// Input 1: PostgreSQL: Mensagens Recentes\n// Input 2: Pinecone: Historico (HTTP)\n// Input 3: Pinecone: Knowledge Base (HTTP)\n// ====================================================================\n\nconst memoria = this.getInputData(0);\nconst mensagens = this.getInputData(1);\nconst historico = this.getInputData(2);\nconst knowledgeBase = this.getInputData(3);\n\nconst results = [];\n\n// Processar cada item (geralmente apenas 1)\nfor (let i = 0; i < memoria.length; i++) {\n  const memoriaItem = memoria[i] || { json: {} };\n  const mensagensItem = mensagens[i] || { json: [] };\n  const historicoItem = historico[i] || { json: {} };\n  const kbItem = knowledgeBase[i] || { json: {} };\n\n  // Extrair dados necessários\n  const client_id = memoriaItem.json.client_id;\n  const message_content = memoriaItem.json.message_content;\n  const client_name = memoriaItem.json.client_name;\n  const normalized = memoriaItem.json.normalized || {};\n  const config = memoriaItem.json.config || {};\n  const meta = memoriaItem.json.meta || {};\n\n  // Consolidar contextos\n  const contextosConsolidados = {\n    client_id: client_id,\n    client_name: client_name,\n    message_content: message_content,\n\n    // Memória do cliente\n    memoria_cliente: memoriaItem.json[0] || null,\n\n    // Mensagens recentes\n    mensagens_recentes: Array.isArray(mensagensItem.json)\n      ? mensagensItem.json\n      : [],\n\n    // Histórico similar (Pinecone)\n    historico_similar: historicoItem.json.matches || [],\n\n    // Base de conhecimento (Pinecone)\n    knowledge_base: kbItem.json.matches || [],\n\n    // Metadata\n    normalized: normalized,\n    config: config,\n    meta: meta\n  };\n\n  results.push({ json: contextosConsolidados });\n}\n\nreturn results;\n"
+      },
+      "id": "fbf06fdd-84e4-45d9-8289-a55fbc263063",
+      "name": "Merge Contextos",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        288
+      ],
+      "notesInFlow": "NOVO v5.005: Mescla 4 contextos paralelos antes do GPT-4"
     }
   ],
   "pinData": {},
@@ -839,7 +853,7 @@
       "main": [
         [
           {
-            "node": "GPT-4: Gerar Resposta",
+            "node": "Merge Contextos",
             "type": "main",
             "index": 0
           }
@@ -850,9 +864,9 @@
       "main": [
         [
           {
-            "node": "GPT-4: Gerar Resposta",
+            "node": "Merge Contextos",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -877,9 +891,9 @@
       "main": [
         [
           {
-            "node": "GPT-4: Gerar Resposta",
+            "node": "Merge Contextos",
             "type": "main",
-            "index": 0
+            "index": 2
           }
         ]
       ]
@@ -888,9 +902,9 @@
       "main": [
         [
           {
-            "node": "GPT-4: Gerar Resposta",
+            "node": "Merge Contextos",
             "type": "main",
-            "index": 0
+            "index": 3
           }
         ]
       ]
@@ -1053,13 +1067,24 @@
           }
         ]
       ]
+    },
+    "Merge Contextos": {
+      "main": [
+        [
+          {
+            "node": "GPT-4: Gerar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "d7c9a27b-9c7b-426b-8ca0-9641a931721f",
+  "versionId": "7a501146-c4f9-459c-8b91-d780316b9b5a",
   "meta": {
     "instanceId": "ff86a5bee6b26a4fe33e10fc3cf5e69a885b4933737382188c57b9f1d85f558c"
   },

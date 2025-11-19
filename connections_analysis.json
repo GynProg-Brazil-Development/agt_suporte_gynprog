@@ -1,0 +1,374 @@
+{
+  "Meta: Webhook": {
+    "main": [
+      [
+        {
+          "node": "Carregar Config Meta",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Carregar Config Meta": {
+    "main": [
+      [
+        {
+          "node": "If",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "If": {
+    "main": [
+      [
+        {
+          "node": "Code in JavaScript",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Preparar Evento Meta",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Code in JavaScript": {
+    "main": [
+      [
+        {
+          "node": "Respond to Webhook1",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Preparar Evento Meta": {
+    "main": [
+      [
+        {
+          "node": "Validar Assinatura",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Validar Assinatura": {
+    "main": [
+      [
+        {
+          "node": "Roteamento Assinatura",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Roteamento Assinatura": {
+    "main": [
+      [
+        {
+          "node": "Roteamento Evento",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Assinatura Invalida",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Roteamento Evento": {
+    "main": [
+      [
+        {
+          "node": "Normalizar Mensagem",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Processar Status",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Evento Desconhecido",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Normalizar Mensagem": {
+    "main": [
+      [
+        {
+          "node": "Rate Limit Check",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Rate Limit Check": {
+    "main": [
+      [
+        {
+          "node": "PostgreSQL: Buscar Memoria",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "OpenAI: Embedding",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "PostgreSQL: Mensagens Recentes",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Merge GPT + Contexto",
+          "type": "main",
+          "index": 1
+        }
+      ]
+    ]
+  },
+  "PostgreSQL: Buscar Memoria": {
+    "main": [
+      [
+        {
+          "node": "GPT-4: Gerar Resposta",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "PostgreSQL: Mensagens Recentes": {
+    "main": [
+      [
+        {
+          "node": "GPT-4: Gerar Resposta",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "OpenAI: Embedding": {
+    "main": [
+      [
+        {
+          "node": "Pinecone: Historico (HTTP)",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Pinecone: Knowledge Base (HTTP)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Pinecone: Historico (HTTP)": {
+    "main": [
+      [
+        {
+          "node": "GPT-4: Gerar Resposta",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Pinecone: Knowledge Base (HTTP)": {
+    "main": [
+      [
+        {
+          "node": "GPT-4: Gerar Resposta",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "GPT-4: Gerar Resposta": {
+    "main": [
+      [
+        {
+          "node": "GPT-4: Atualizar Memoria",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Empacotar Resposta GPT",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "GPT-4: Atualizar Memoria": {
+    "main": [
+      [
+        {
+          "node": "Processar Memoria JSON",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Processar Memoria JSON": {
+    "main": [
+      [
+        {
+          "node": "PostgreSQL: Salvar Memoria",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Empacotar Resposta GPT": {
+    "main": [
+      [
+        {
+          "node": "Merge GPT + Contexto",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Merge GPT + Contexto": {
+    "main": [
+      [
+        {
+          "node": "Preparar Resposta",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Preparar Resposta": {
+    "main": [
+      [
+        {
+          "node": "Meta: Enviar Mensagem",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Meta: Enviar Mensagem": {
+    "main": [
+      [
+        {
+          "node": "Calcular Latencia",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Assinatura Invalida": {
+    "main": [
+      [
+        {
+          "node": "Calcular Latencia",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Processar Status": {
+    "main": [
+      [
+        {
+          "node": "Calcular Latencia",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Evento Desconhecido": {
+    "main": [
+      [
+        {
+          "node": "Calcular Latencia",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Calcular Latencia": {
+    "main": [
+      [
+        {
+          "node": "Registrar Metricas",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Registrar Metricas": {
+    "main": [
+      [
+        {
+          "node": "Respond to Webhook",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Error Handler v5.003": {
+    "main": [
+      [
+        {
+          "node": "Log Error",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Log Error": {
+    "main": [
+      [
+        {
+          "node": "Error Response",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  }
+}
