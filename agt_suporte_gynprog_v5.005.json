@@ -12,8 +12,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        448,
-        304
+        -80,
+        128
       ],
       "notesInFlow": "FIXED v5.003: Usando prepared statement para prevenir SQL injection"
     },
@@ -28,8 +28,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        448,
-        496
+        -80,
+        320
       ],
       "notesInFlow": "FIXED v5.003: Prepared statement + limite parametrizado"
     },
@@ -43,8 +43,8 @@
       "type": "n8n-nodes-base.openAi",
       "typeVersion": 1,
       "position": [
-        448,
-        880
+        -304,
+        728
       ],
       "notesInFlow": "FIXED v5.004: Adicionado campo text para embedding\nv5.003: Considerar cache para mensagens similares"
     },
@@ -70,8 +70,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        672,
-        784
+        -80,
+        608
       ],
       "notesInFlow": "\nv5.003: Recomenda-se mover URL para variável de ambiente"
     },
@@ -97,8 +97,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        672,
-        976
+        -80,
+        800
       ],
       "notesInFlow": "\nv5.003: Recomenda-se mover URL para variável de ambiente"
     },
@@ -117,8 +117,8 @@
       "type": "n8n-nodes-base.openAi",
       "typeVersion": 1,
       "position": [
-        896,
-        304
+        368,
+        248
       ],
       "notesInFlow": "FIXED v5.005: Prompt atualizado para usar dados consolidados do Merge Contextos\nv5.004: Configurado resource=chat com mensagens e contexto completo\nPrompt v2025-02-15\nSystem: Você é um agente de suporte da Gynprog, responde em PT-BR, mantendo tom profissional e empático.\nUser template: mensagem normalizada, memória do cliente, últimos contatos e trechos da base de conhecimento.\nInstruções: confirmar entendimento, citar dados apenas se presentes nas fontes e sinalizar limitações quando ocorrerem."
     },
@@ -137,8 +137,8 @@
       "type": "n8n-nodes-base.openAi",
       "typeVersion": 1,
       "position": [
-        1120,
-        208
+        592,
+        128
       ],
       "notesInFlow": "FIXED v5.004: Configurado resource=chat com prompt de consolidação de memória\nPrompt v2025-02-15\nInstrui o modelo a consolidar memória do cliente (resumo, pendências, tópicos e sentimento) sem duplicar itens."
     },
@@ -151,8 +151,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1344,
-        208
+        816,
+        128
       ],
       "notesInFlow": "NOVO v5.004: Processa resposta JSON do GPT-4 Atualizar Memoria"
     },
@@ -167,8 +167,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        1568,
-        208
+        1040,
+        128
       ],
       "notesInFlow": "FIXED v5.003: Prepared statement + arrays via jsonb"
     },
@@ -183,8 +183,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        2464,
-        768
+        1936,
+        776
       ]
     },
     {
@@ -194,8 +194,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        0,
-        576
+        -752,
+        392
       ],
       "id": "f5cb1002-0f03-48a0-9569-bae9cc3c6149",
       "name": "Normalizar Mensagem",
@@ -210,8 +210,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        672,
-        1840
+        -80,
+        1384
       ]
     },
     {
@@ -263,8 +263,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 1,
       "position": [
-        224,
-        1744
+        -528,
+        1288
       ]
     },
     {
@@ -276,8 +276,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        896,
-        1840
+        144,
+        1384
       ]
     },
     {
@@ -289,8 +289,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1792,
-        1152
+        1264,
+        776
       ]
     },
     {
@@ -302,8 +302,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1792,
-        960
+        1264,
+        968
       ]
     },
     {
@@ -315,8 +315,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1792,
-        768
+        1264,
+        584
       ]
     },
     {
@@ -328,8 +328,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1568,
-        576
+        1040,
+        392
       ]
     },
     {
@@ -341,8 +341,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1792,
-        576
+        1264,
+        392
       ]
     },
     {
@@ -354,8 +354,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        2016,
-        768
+        1488,
+        776
       ]
     },
     {
@@ -367,8 +367,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        2240,
-        768
+        1712,
+        776
       ]
     },
     {
@@ -383,8 +383,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        0,
-        1744
+        -752,
+        1288
       ],
       "webhookId": "6c01cb74-bb50-4e48-8e13-aae11077cc9d"
     },
@@ -416,8 +416,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        448,
-        1744
+        -304,
+        1288
       ],
       "id": "e8617faf-820d-481f-91e0-8c38fee66062",
       "name": "If"
@@ -441,8 +441,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        896,
-        1648
+        144,
+        1192
       ],
       "id": "1a711df2-0321-4cc5-a725-8bac681f3187",
       "name": "Respond to Webhook1"
@@ -454,8 +454,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
-        1648
+        -80,
+        1192
       ],
       "id": "bcd47326-b724-426b-996e-73295e7967d6",
       "name": "Code in JavaScript"
@@ -469,8 +469,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1120,
-        400
+        592,
+        320
       ]
     },
     {
@@ -483,8 +483,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2,
       "position": [
-        1344,
-        576
+        816,
+        392
       ]
     },
     {
@@ -494,8 +494,8 @@
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
       "position": [
-        0,
-        1424
+        -752,
+        1608
       ],
       "notesInFlow": "NOVO v5.003: Captura e trata erros do workflow"
     },
@@ -508,8 +508,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        224,
-        1424
+        -528,
+        1608
       ]
     },
     {
@@ -525,8 +525,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        448,
-        1424
+        -304,
+        1608
       ]
     },
     {
@@ -538,8 +538,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        224,
-        576
+        -528,
+        392
       ],
       "notesInFlow": "NOVO v5.003: Rate limiting (implementação básica, requer Redis para produção)"
     },
@@ -552,8 +552,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        672,
-        304
+        144,
+        248
       ],
       "notesInFlow": "NOVO v5.005: Mescla 4 contextos paralelos antes do GPT-4"
     },
@@ -591,8 +591,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.3,
       "position": [
-        1344,
-        1840
+        592,
+        1384
       ],
       "id": "e407bb2b-84fe-4cd0-8c26-155191dfa0fa",
       "name": "Roteamento Evento"
@@ -653,8 +653,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.3,
       "position": [
-        1120,
-        1840
+        368,
+        1384
       ],
       "id": "0bfc0c03-871c-44f1-bff3-bcb1f73bb79a",
       "name": "Roteamento Assinatura"
@@ -883,7 +883,13 @@
     },
     "Assinatura Invalida": {
       "main": [
-        []
+        [
+          {
+            "node": "Calcular Latencia",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Processar Status": {
@@ -989,13 +995,48 @@
         ],
         []
       ]
+    },
+    "PostgreSQL: Mensagens Recentes": {
+      "main": [
+        [
+          {
+            "node": "Merge Contextos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone: Historico (HTTP)": {
+      "main": [
+        [
+          {
+            "node": "Merge Contextos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone: Knowledge Base (HTTP)": {
+      "main": [
+        [
+          {
+            "node": "Merge Contextos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
-  "versionId": "b8a4c74e-3f7b-4bc8-8fb4-97520e4dd4fe",
+  "versionId": "eced9a1a-676b-4071-800c-b3fe43fb397b",
   "meta": {
     "instanceId": "ff86a5bee6b26a4fe33e10fc3cf5e69a885b4933737382188c57b9f1d85f558c"
   },
